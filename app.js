@@ -104,7 +104,7 @@ app.post(
     };
 
     console.log("Info: Job set");
-    await routineJobsQueue.add(job);
+    await vectorQueue.add(job);
 
     // await pinecone.init({
     //   environment: "us-east1-gcp",
