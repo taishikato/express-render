@@ -81,6 +81,8 @@ app.post(
       },
     });
 
+    console.log("upsertResponse", upsertResponse);
+
     await supabaseAdmin
       .from("documents")
       .update({ is_generating_vector_data: false })
