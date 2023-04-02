@@ -17,7 +17,7 @@ const supabaseAdmin = createClient(
 const jsonParser = bodyParser.json();
 
 app.get("/", (req, res) => {
-  console.log("/ is called!");
+  console.log("Info: / is called!");
 
   res.json({ result: "ok" });
 });
