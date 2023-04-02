@@ -1,4 +1,3 @@
-// import { PineconeClient } from "@pinecone-database/pinecone";
 const { PineconeClient } = require("@pinecone-database/pinecone");
 const { createClient } = require("@supabase/supabase-js");
 const express = require("express");
@@ -10,7 +9,7 @@ const port = process.env.PORT || 3001;
 
 const pinecone = new PineconeClient();
 
-export const supabaseAdmin = createClient(
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
 );
