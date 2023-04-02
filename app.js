@@ -16,6 +16,12 @@ const supabaseAdmin = createClient(
 
 const jsonParser = bodyParser.json();
 
+app.get("/", (req, res) => {
+  console.log("/ is called!");
+
+  res.json({ result: "ok" });
+});
+
 app.post("/generate-vector", jsonParser, async (req, res) => {
   console.log("/generate-vector is called!");
 
