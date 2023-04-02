@@ -82,6 +82,15 @@ vectorQueue.process(async (job, done) => {
   done();
 });
 
+vectorQueue.on("completed", (job, result) => {
+  const jobData = job.data;
+  console.log(
+    `job with filterId ${
+      jobData.filterId
+    } is completed with result: ${JSON.stringify(result)}`
+  );
+});
+
 app.get("/", (req, res, next) => {
   console.log("Info: / is called!");
 
@@ -105,61 +114,6 @@ app.post(
 
     console.log("Info: Job set");
     await vectorQueue.add(job);
-
-    // await pinecone.init({
-    //   environment: "us-east1-gcp",
-    //   apiKey: process.env.PINECONE_KEY,
-    // });
-
-    // const index = pinecone.Index("test-index");
-
-    // const textArray = sentences.map((t) => t.text);
-
-    // let i = 0;
-    // const vectorPayload = [];
-    // console.log("Start: Calling Open AI embeddings API...");
-    // for (const sentence of textArray) {
-    //   console.log(`Number: ${i}`);
-    //   const res = await fetch("https://api.openai.com/v1/embeddings", {
-    //     method: "POST",
-    //     headers: {
-    //       Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({
-    //       input: sentence,
-    //       model: "text-embedding-ada-002",
-    //     }),
-    //   });
-
-    //   const json = await res.json();
-
-    //   vectorPayload.push({
-    //     id: `${filterId}-${i}`,
-    //     values: json.data[0].embedding,
-    //     metadata: {
-    //       text: sentence,
-    //       filterId,
-    //     },
-    //   });
-
-    //   i++;
-    // }
-
-    // console.log("Upsert to Pinecone...");
-    // const upsertResponse = await index.upsert({
-    //   upsertRequest: {
-    //     vectors: vectorPayload,
-    //     namespace: "example-namespace",
-    //   },
-    // });
-
-    // console.log("upsertResponse", upsertResponse);
-
-    // await supabaseAdmin
-    //   .from("documents")
-    //   .update({ is_generating_vector_data: false })
-    //   .eq("filter_id", filterId);
 
     console.log("End: Request successfully done.");
     return res.json({
