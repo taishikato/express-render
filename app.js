@@ -1,59 +1,93 @@
+// import { PineconeClient } from "@pinecone-database/pinecone";
+const { PineconeClient } = require("@pinecone-database/pinecone");
+const { createClient } = require("@supabase/supabase-js");
 const express = require("express");
+const bodyParser = require("body-parser");
+
 const app = express();
+
 const port = process.env.PORT || 3001;
 
-app.get("/", (req, res) => res.type('html').send(html));
+const pinecone = new PineconeClient();
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+export const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
+const jsonParser = bodyParser.json();
 
-const html = `
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Hello from Render!</title>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-    <script>
-      setTimeout(() => {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          disableForReducedMotion: true
-        });
-      }, 500);
-    </script>
-    <style>
-      @import url("https://p.typekit.net/p.css?s=1&k=vnd5zic&ht=tk&f=39475.39476.39477.39478.39479.39480.39481.39482&a=18673890&app=typekit&e=css");
-      @font-face {
-        font-family: "neo-sans";
-        src: url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff2"), url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/d?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("woff"), url("https://use.typekit.net/af/00ac0a/00000000000000003b9b2033/27/a?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n7&v=3") format("opentype");
-        font-style: normal;
-        font-weight: 700;
-      }
-      html {
-        font-family: neo-sans;
-        font-weight: 700;
-        font-size: calc(62rem / 16);
-      }
-      body {
-        background: white;
-      }
-      section {
-        border-radius: 1em;
-        padding: 1em;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        margin-right: -50%;
-        transform: translate(-50%, -50%);
-      }
-    </style>
-  </head>
-  <body>
-    <section>
-      Hello from Render!
-    </section>
-  </body>
-</html>
-`
+app.post("/generate-vector", jsonParser, async (req, res) => {
+  console.log("/generate-vector is called!");
+
+  const { sentences, filterId } = req.body;
+
+  console.log("filterId", filterId);
+
+  await pinecone.init({
+    environment: "us-east1-gcp",
+    apiKey: process.env.PINECONE_KEY,
+  });
+
+  const index = pinecone.Index("test-index");
+
+  const textArray = sentences.map((t) => t.text);
+
+  let i = 0;
+  const vectorPayload = [];
+  console.log("Start: Calling Open AI embeddings API...");
+  for (const sentence of textArray) {
+    console.log(`Number: ${i}`);
+    const res = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        input: sentence,
+        model: "text-embedding-ada-002",
+      }),
+    });
+
+    const json = await res.json();
+
+    vectorPayload.push({
+      id: `${filterId}-${i}`,
+      values: json.data[0].embedding,
+      metadata: {
+        text: sentence,
+        filterId,
+      },
+    });
+
+    i++;
+  }
+
+  console.log("Upsert to Pinecone...");
+  const upsertResponse = await index.upsert({
+    upsertRequest: {
+      vectors: vectorPayload,
+      namespace: "example-namespace",
+    },
+  });
+
+  await supabaseAdmin
+    .from("documents")
+    .update({ is_generating_vector_data: false })
+    .eq("filter_id", filterId);
+
+  console.log("End: Request successfully done.");
+  res.json({
+    result: "ok",
+  });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send(err.message || "An error occurred!");
+});
+
+app.listen(port, () => {
+  console.log(`App listening on port ${port}!`);
+});
