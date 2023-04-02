@@ -19,7 +19,7 @@ const jsonParser = bodyParser.json();
 app.get("/", (req, res) => {
   console.log("Info: / is called!");
 
-  res.json({ result: "ok" });
+  return res.json({ result: "ok" });
 });
 
 app.post("/generate-vector", jsonParser, async (req, res) => {
@@ -83,7 +83,7 @@ app.post("/generate-vector", jsonParser, async (req, res) => {
     .eq("filter_id", filterId);
 
   console.log("End: Request successfully done.");
-  res.json({
+  return res.json({
     result: "ok",
   });
 });
