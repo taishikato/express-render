@@ -74,6 +74,24 @@ vectorQueue.process(async (job, done) => {
     },
   });
 
+  console.log("Upsert to Supabase vector...");
+  await Promise.all(
+    vectorPayload.map((v) => {
+      return supabaseAdmin.from("vectors").insert({
+        content: v.metadata.text,
+        embedding: v.values,
+        filter_id: v.metadata.filterId,
+      });
+    })
+  );
+  // const { data, error } = await supabaseAdmin.from("vectors").insert({
+  //   content: sentence,
+  //   embedding: json.data[0].embedding,
+  //   filter_id: filterId,
+  // });
+
+  if (error) console.error("error", error);
+
   await supabaseAdmin
     .from("documents")
     .update({ is_generating_vector_data: false })
