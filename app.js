@@ -83,7 +83,7 @@ vectorQueue.process(async (job, done) => {
         filter_id: v.metadata.filterId,
       });
     })
-  );
+  ).catch((err) => console.error(err));
   // const { data, error } = await supabaseAdmin.from("vectors").insert({
   //   content: sentence,
   //   embedding: json.data[0].embedding,
