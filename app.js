@@ -90,8 +90,6 @@ vectorQueue.process(async (job, done) => {
   //   filter_id: filterId,
   // });
 
-  if (error) console.error("error", error);
-
   await supabaseAdmin
     .from("documents")
     .update({ is_generating_vector_data: false })
